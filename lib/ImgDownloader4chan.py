@@ -1,12 +1,11 @@
 import os
-import urllib
 import re
+import urllib
 # import time
 
 class ImgDownloader4chan:
 
     def __init__(self):
-        self.image_url = 'http://images.4chan.org'
         # self.rescan_time = 10
 
         self.raw_url = raw_input('Please enter the URL of the thread:\n').split('#')[0]
@@ -28,7 +27,6 @@ class ImgDownloader4chan:
             # time.sleep(self.rescan_time)
 
             print ''
-
             self.image_urls = self.find_image_urls()
 
         print '\nFinished.'
@@ -61,11 +59,11 @@ class ImgDownloader4chan:
         tmp_urls = re.findall('(/[A-Za-z]+/src/\\d+\\.)(jpeg|jpg|png|gif)', html)
 
         for img in tmp_urls:
-            img_urls.append(self.image_url + img[0] + img[1])
+            img_urls.append('http://images.4chan.org' + img[0] + img[1])
 
-        print str(len(img_urls)/2) + ' images found.' # note: tmp_urls containts every url twice
+        print str(len(img_urls)/2) + ' images found.' # note: img_urls containts every url twice
 
-        return list(set(img_urls))
+        return list(set(img_urls)) # removes duplicates in img_urls
 
     def remove_duplicates(self):
         """
