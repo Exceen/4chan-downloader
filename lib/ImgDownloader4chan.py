@@ -1,39 +1,46 @@
 import os
-import sys
 import urllib
 import re
-# import subprocess
-import time
+# import time
 
 class ImgDownloader4chan:
 
     def __init__(self):
         self.image_url = 'http://images.4chan.org'
-        self.rescan_time = 5
-        self.board = raw_input('What board should I download from?\n')
-        self.thread = raw_input('Which thread number?\n')
-        self.url = self.make_url()
+        # self.rescan_time = 10
 
-        if self.find_image_urls(self.url) != []: # otherwise no images are available to download
-            self.directory = self.make_directory()
-            self.loop()
+        self.raw_url = raw_input('Please enter the URL of the thread:\n').split('#')[0]
+        print ''
+        self.board = self.raw_url.split('/')[3]
+        self.thread = self.raw_url.split('/')[5]
+
+        self.url = self.create_url()
+        self.directory = self.create_directory()
+
+        self.loop()
 
     def loop(self):
-        for x in xrange(1,3):
-            self.image_urls = self.find_image_urls(self.url)
+        self.image_urls = self.find_image_urls()
 
-            # if self.images_urls != []:
-            self.remove_duplicates()
+        while len(self.image_urls) > self.remove_duplicates():
+            print ''
             self.download_images()
-            time.sleep(self.rescan_time)
+            # time.sleep(self.rescan_time)
 
-        print 'Finished.'
-    def make_url(self):
+            print ''
+
+            self.image_urls = self.find_image_urls()
+
+        print '\nFinished.'
+
+    def create_url(self):
+
         template = 'http://boards.4chan.org/{board}/res/{thread}'
         template = template.replace('{board}', self.board)
         template = template.replace('{thread}', self.thread)
         return template
-    def make_directory(self):
+
+    def create_directory(self):
         """
         Creates a directory called 'downloads' with the subdirectories for the images.
         e.g.: ./downloads/{board}/{thread}
@@ -45,18 +52,19 @@ class ImgDownloader4chan:
 
         return directory
 
-    def find_image_urls(self, url):
+    def find_image_urls(self):
         """
         Should find all images which should be downloaded from 4chan. Yes, 'should'.
         """
         img_urls = []
-        html = urllib.urlopen(url).read()
+        html = urllib.urlopen(self.url).read()
         tmp_urls = re.findall('(/[A-Za-z]+/src/\\d+\\.)(jpeg|jpg|png|gif)', html)
 
         for img in tmp_urls:
             img_urls.append(self.image_url + img[0] + img[1])
 
-        print str(len(img_urls)/2) + ' images found.' # little bit buggy, because img_urls contains the URLs twice
+        print str(len(img_urls)/2) + ' images found.' # note: tmp_urls containts every url twice
+
         return list(set(img_urls))
 
     def remove_duplicates(self):
@@ -73,6 +81,8 @@ class ImgDownloader4chan:
             self.image_urls.remove(file)
 
         print str(len(duplicates)) + ' files downloaded previously.'
+
+        return len(duplicates)
 
     def download_images(self):
         """
