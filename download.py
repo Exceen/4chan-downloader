@@ -1,4 +1,54 @@
-from lib.ImgDownloader4chan import ImgDownloader4chan
+#!/usr/bin/python
+import urllib2, argparse, logging
+import os, re, time
+import httplib
+import sys
+
+log = logging.getLogger('inb4404')
+
+def load(url):
+	return urllib2.urlopen(url).read()
+
+def main():
+	parser = argparse.ArgumentParser(description='inb4 404')
+	parser.add_argument('thread', nargs=1)
+	args = parser.parse_args()
+
+	logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
+
+	board = ''.join(args.thread).split('/')[3]
+	thread = ''.join(args.thread).split('/')[5]
+	workpath = os.path.dirname(os.path.realpath(__file__))
+
+	directory = os.path.join(workpath, 'downloads', board, thread)
+	if not os.path.exists(directory):
+		os.makedirs(directory)
+
+	os.chdir(directory)
+
+	while len(args.thread):
+		for t in args.thread:
+			try:
+				# for link, img in re.findall('(//images.4chan.org/\\w+/src/(\\d+\\.(?:jpg|png|gif)))', load(t)):
+				for link, img in re.findall('(//i.4cdn.org/\w+/(\d+.(?:jpg|png|gif|webm)))', load(t)):
+					if not os.path.exists(img):
+						log.info(img)
+						data = load('https:' + link)
+						with open(img, 'w') as f:
+							f.write(data)
+			except urllib2.HTTPError, err:
+				log.info('%s 404\'d', t)
+				args.thread.remove(t)
+				continue
+			except (urllib2.URLError, httplib.BadStatusLine, httplib.IncompleteRead):
+				log.warning('something went wrong')
+		print('.')
+		time.sleep(20)
 
 if __name__ == '__main__':
-    ImgDownloader4chan()
+	try:
+		main()
+	except KeyboardInterrupt:
+		pass
+
+
