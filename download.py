@@ -1,8 +1,7 @@
 #!/usr/bin/python
 import urllib2, argparse, logging
-import os, re, time
+import os, sys, re, time
 import httplib
-import sys
 
 log = logging.getLogger('inb4404')
 
@@ -10,15 +9,15 @@ def load(url):
 	return urllib2.urlopen(url).read()
 
 def main():
-	parser = argparse.ArgumentParser(description='inb4 404')
+	parser = argparse.ArgumentParser(description='inb4404')
 	parser.add_argument('thread', nargs=1)
 	args = parser.parse_args()
 
 	logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
+	workpath = os.path.dirname(os.path.realpath(__file__))
 	board = ''.join(args.thread).split('/')[3]
 	thread = ''.join(args.thread).split('/')[5]
-	workpath = os.path.dirname(os.path.realpath(__file__))
 
 	directory = os.path.join(workpath, 'downloads', board, thread)
 	if not os.path.exists(directory):
@@ -50,5 +49,3 @@ if __name__ == '__main__':
 		main()
 	except KeyboardInterrupt:
 		pass
-
-
