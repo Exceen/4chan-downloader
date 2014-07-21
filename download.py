@@ -10,7 +10,7 @@ def load(url):
 
 def main():
 	parser = argparse.ArgumentParser(description='inb4404')
-	parser.add_argument('thread', nargs=1, description='thread-url')
+	parser.add_argument('thread', nargs=1, help='url of the thread')
 	args = parser.parse_args()
 
 	logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
