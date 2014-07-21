@@ -10,7 +10,7 @@ def load(url):
 
 def main():
 	parser = argparse.ArgumentParser(description='inb4404')
-	parser.add_argument('thread', nargs=1)
+	parser.add_argument('thread', nargs=1, description='thread-url')
 	args = parser.parse_args()
 
 	logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
@@ -28,7 +28,7 @@ def main():
 	while len(args.thread):
 		for t in args.thread:
 			try:
-				# for link, img in re.findall('(//images.4chan.org/\\w+/src/(\\d+\\.(?:jpg|png|gif)))', load(t)):
+				# for link, img in re.findall('(//images.4chan.org/\\w+/src/(\\d+\\.(?:jpg|png|gif)))', load(t)): #old regex
 				for link, img in re.findall('(//i.4cdn.org/\w+/(\d+.(?:jpg|png|gif|webm)))', load(t)):
 					if not os.path.exists(img):
 						log.info(img)
