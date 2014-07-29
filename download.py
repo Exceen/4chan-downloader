@@ -28,8 +28,7 @@ def main():
 	while len(args.thread):
 		for t in args.thread:
 			try:
-				# for link, img in re.findall('(//images.4chan.org/\\w+/src/(\\d+\\.(?:jpg|png|gif)))', load(t)): #old regex
-				for link, img in re.findall('(//i.4cdn.org/\w+/(\d+.(?:jpg|png|gif|webm)))', load(t)):
+				for link, img in re.findall('(\/\/i.4cdn.org/\w+\/(\d+\.(?:jpg|png|gif|webm)))', load(t)):
 					if not os.path.exists(img):
 						log.info(img)
 						data = load('https:' + link)
