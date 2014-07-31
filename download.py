@@ -17,7 +17,7 @@ def main():
 
 	workpath = os.path.dirname(os.path.realpath(__file__))
 	board = ''.join(args.thread).split('/')[3]
-	thread = ''.join(args.thread).split('/')[5]
+	thread = ''.join(args.thread).split('/')[5].split('#')[0]
 
 	directory = os.path.join(workpath, 'downloads', board, thread)
 	if not os.path.exists(directory):
