@@ -11,13 +11,18 @@ def load(url):
 def main():
 	parser = argparse.ArgumentParser(description='inb4404')
 	parser.add_argument('thread', nargs=1, help='url of the thread')
+	parser.add_argument('folder', nargs='?', help='change output folder')
 	args = parser.parse_args()
 
 	logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
 	workpath = os.path.dirname(os.path.realpath(__file__))
 	board = ''.join(args.thread).split('/')[3]
-	thread = ''.join(args.thread).split('/')[5].split('#')[0]
+
+	if args.folder is not None:
+		thread = ''.join(args.folder)
+	else:
+		thread = ''.join(args.thread).split('/')[5].split('#')[0]
 
 	directory = os.path.join(workpath, 'downloads', board, thread)
 	if not os.path.exists(directory):
