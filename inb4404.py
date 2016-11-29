@@ -17,7 +17,7 @@ def main():
     global args
     parser = argparse.ArgumentParser(description='inb4404')
     parser.add_argument('thread', nargs=1, help='url of the thread (or filename; one url per line)')
-    parser.add_argument('-r', '--reload', action='store_true', help='this reloads the file every 15 minutes')
+    parser.add_argument('-r', '--reload', action='store_true', help='this reloads the file every 5 minutes')
     parser.add_argument('-v', '--verbose', action='store_true', help='display board/thread as well')
     args = parser.parse_args()
 
@@ -93,15 +93,15 @@ def download_from_file(filename):
                 if args.verbose:
                     log.info('Started: ' + link)
             
-            for process, link in processes:
-                try:
-                    process.join()
-                except KeyboardInterrupt:
-                    if process.is_alive():
-                        process.terminate()
+            # for process, link in processes:
+            #     try:
+            #         process.join()
+            #     except KeyboardInterrupt:
+            #         if process.is_alive():
+            #             process.terminate()
 
             if args.reload:
-                print 'args.reload'
+                # print 'args.reload'
                 time.sleep(60 * 5) # 5 Minutes
                 links_to_remove = []
                 for process, link in processes:
