@@ -17,7 +17,8 @@ def main():
     global args
     parser = argparse.ArgumentParser(description='inb4404')
     parser.add_argument('thread', nargs=1, help='url of the thread (or filename; one url per line)')
-    parser.add_argument('-r', '--reload', action='store_true', help='this reloads the file every 15 minutes')
+    parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
+    parser.add_argument('-r', '--reload', action='store_true', help='reload the file every 5 minutes')
     parser.add_argument('-v', '--verbose', action='store_true', help='display board/thread as well')
     args = parser.parse_args()
 
@@ -32,6 +33,11 @@ def download_thread(thread_link):
     try:
         board = thread_link.split('/')[3]
         thread = thread_link.split('/')[5].split('#')[0]
+        if len(thread_link.split('/')) > 6:
+            thread_tmp = thread_link.split('/')[6].split('#')[0]
+
+            if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+                thread = thread_tmp
 
         directory = os.path.join(workpath, 'downloads', board, thread)
         if not os.path.exists(directory):
@@ -39,7 +45,7 @@ def download_thread(thread_link):
 
         while True:
             try:
-                for link, img in list(set(re.findall('(\/\/i.4cdn.org/\w+\/(\d+\.(?:jpg|png|gif|webm)))', load(thread_link)))):
+                for link, img in list(set(re.findall('(\/\/is.4chan.org/\w+\/(\d+\.(?:jpg|png|gif|webm)))', load(thread_link)))):
                     img_path = directory + '/' + img
                     if not os.path.exists(img_path):
                         data = load('https:' + link)
