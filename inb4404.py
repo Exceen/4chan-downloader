@@ -37,6 +37,7 @@ def download_thread(thread_link):
             thread_tmp = thread_link.split('/')[6].split('#')[0]
 
             if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+                log.info('Using ' + os.path.join('downloads', board, thread_tmp) + ' instead of ' + os.path.join('downloads', board, thread))
                 thread = thread_tmp
 
         directory = os.path.join(workpath, 'downloads', board, thread)
@@ -46,14 +47,14 @@ def download_thread(thread_link):
         while True:
             try:
                 for link, img in list(set(re.findall('(\/\/is.4chan.org/\w+\/(\d+\.(?:jpg|png|gif|webm)))', load(thread_link)))):
-                    img_path = directory + '/' + img
+                    img_path = os.path.join(directory, img)
                     if not os.path.exists(img_path):
                         data = load('https:' + link)
 
                         if not args.verbose:
                             log.info(img)
                         else:
-                            log.info(img.ljust(22) + 'at /' + board + '/' + thread)
+                            log.info(img.ljust(22) + 'in /' + board + '/' + thread)
 
                         with open(img_path, 'w') as f:
                             f.write(data)
@@ -65,7 +66,7 @@ def download_thread(thread_link):
                         copy_directory = os.path.join(workpath, 'new', board, thread)
                         if not os.path.exists(copy_directory):
                             os.makedirs(copy_directory)
-                        copy_path = copy_directory + '/' + img
+                        copy_path = os.path.join(copy_directory, img)
                         with open(copy_path, 'w') as f:
                             f.write(data)
                         ##################################################################################
@@ -78,7 +79,7 @@ def download_thread(thread_link):
                     break
                 continue
             except (urllib2.URLError, httplib.BadStatusLine, httplib.IncompleteRead):
-                log.warning('something went wrong')
+                log.warning('Something went wrong')
 
             if not args.verbose:
                 print '.'
