@@ -46,7 +46,7 @@ def download_thread(thread_link):
 
         while True:
             try:
-                for link, img in list(set(re.findall('(\/\/is.4chan.org/\w+\/(\d+\.(?:jpg|png|gif|webm)))', load(thread_link)))):
+                for link, img in list(set(re.findall('(\/\/is\d*\.4chan\.org/\w+\/(\d+\.(?:jpg|png|gif|webm)))', load(thread_link)))):
                     img_path = os.path.join(directory, img)
                     if not os.path.exists(img_path):
                         data = load('https:' + link)
