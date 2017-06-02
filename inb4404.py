@@ -19,9 +19,14 @@ def main():
     parser.add_argument('thread', nargs=1, help='url of the thread (or filename; one url per line)')
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the file every 5 minutes')
+    parser.add_argument('-l', '--less', action='store_true', help='shows less information (surpresses checking messages)')
+    parser.add_argument('-d', '--date', action='store_true', help='show date as well')
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+    if args.date:
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
+    else:
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
 
     if args.thread[0][:4].lower() == 'http':
         download_thread(args.thread[0])
@@ -76,7 +81,8 @@ def download_thread(thread_link):
         except (urllib2.URLError, httplib.BadStatusLine, httplib.IncompleteRead):
             log.warning('Something went wrong')
 
-        log.info('Checking ' + board + '/' + thread)
+        if not args.less:
+            log.info('Checking ' + board + '/' + thread)
         time.sleep(20)
 
 def download_from_file(filename):
@@ -109,7 +115,8 @@ def download_from_file(filename):
                     print line.replace(link, '-' + link),
                 running_links.remove(link)
                 log.info('Removed ' + link)
-            log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
+            if not args.less:
+                log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
         else:
             break
 
@@ -119,3 +126,4 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         pass
+
