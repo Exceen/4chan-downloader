@@ -7,3 +7,11 @@ Just run
 'python inb4404.py -h'
 if you need any help.
 
+### Requirements
+* BeautifulSoup:
+
+  `$ pip install beautifulsoup4`
+* Requests:
+
+  `$ pip install requests`
+
