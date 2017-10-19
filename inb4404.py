@@ -1,17 +1,17 @@
 #!/usr/bin/python
-import urllib2, argparse, logging
+
 import os, re, time
-import httplib 
-import fileinput
+import requests as r
 from multiprocessing import Process
+import fileinput, argparse, logging
 
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
 
 def load(url):
-    req = urllib2.Request(url, headers={'User-Agent': '4chan Browser'})
-    return urllib2.urlopen(req).read()
+    req = r.get(url, headers={'User-Agent': '4chan Browser'}, timeout=10).raise_for_status()
+    return req.content
 
 def main():
     global args
@@ -52,34 +52,37 @@ def download_thread(thread_link):
             for link, img in list(set(re.findall(regex, load(thread_link)))):
                 img_path = os.path.join(directory, img)
                 if not os.path.exists(img_path):
-                    data = load('https:' + link)
-
                     log.info(board + '/' + thread + '/' + img)
 
-                    with open(img_path, 'w') as f:
-                        f.write(data)
+                    with open(img_path, 'wb') as f:
+                        get_image = r.get("http:" + link, timeout=10)
+                        f.write(get_image.content)
 
-                    ##################################################################################
-                    # saves new images to a seperate directory
-                    # if you delete them there, they are not downloaded again
-                    # if you delete an image in the 'downloads' directory, it will be downloaded again
+                    # Saves new images to a separate directory
+                    # If you delete them there, they are not downloaded again
+                    # If you delete an image in the 'downloads' directory, it will be downloaded again
+
                     copy_directory = os.path.join(workpath, 'new', board, thread)
                     if not os.path.exists(copy_directory):
                         os.makedirs(copy_directory)
                     copy_path = os.path.join(copy_directory, img)
-                    with open(copy_path, 'w') as f:
-                        f.write(data)
-                    ##################################################################################
-        except urllib2.HTTPError, err:
+                    with open(copy_path, 'wb') as f:
+                        get_image = r.get("http:" + link, timeout=10)
+                        f.write(get_image.content)
+
+        except r.HTTPError:
+            log.info('%s 404\'d', thread_link)
+            break
+
+        except r.ConnectionError:
+            log.warning('Something went wrong. Trying again in 10 seconds')
             time.sleep(10)
             try:
-                load(thread_link)    
-            except urllib2.HTTPError, err:
-                log.info('%s 404\'d', thread_link)
+                load(thread_link)
+            except r.ConnectionError:
+                log.error('A connection cannot be established')
                 break
             continue
-        except (urllib2.URLError, httplib.BadStatusLine, httplib.IncompleteRead):
-            log.warning('Something went wrong')
 
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
@@ -120,10 +123,8 @@ def download_from_file(filename):
         else:
             break
 
-
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         pass
-
