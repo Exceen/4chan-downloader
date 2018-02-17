@@ -49,25 +49,25 @@ def download_thread(thread_link):
     while True:
         try:
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
-            for link, img in list(set(re.findall(regex, load(thread_link)))):
+            for link, img in list(set(re.findall(regex, str(load(thread_link))))):
                 img_path = os.path.join(directory, img)
                 if not os.path.exists(img_path):
                     data = load('https:' + link)
 
                     log.info(board + '/' + thread + '/' + img)
 
-                    with open(img_path, 'w') as f:
+                    with open(img_path, 'wb') as f:
                         f.write(data)
 
                     ##################################################################################
-                    # saves new images to a seperate directory
+                    # saves new images to a separate directory
                     # if you delete them there, they are not downloaded again
                     # if you delete an image in the 'downloads' directory, it will be downloaded again
                     copy_directory = os.path.join(workpath, 'new', board, thread)
                     if not os.path.exists(copy_directory):
                         os.makedirs(copy_directory)
                     copy_path = os.path.join(copy_directory, img)
-                    with open(copy_path, 'w') as f:
+                    with open(copy_path, 'wb') as f:
                         f.write(data)
                     ##################################################################################
         except urllib.error.HTTPError as err:
