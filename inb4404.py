@@ -1,7 +1,7 @@
 #!/usr/bin/python
-import urllib2, argparse, logging
+import urllib.request, urllib.error, urllib.parse, argparse, logging
 import os, re, time
-import httplib 
+import http.client
 import fileinput
 from multiprocessing import Process
 
@@ -10,8 +10,8 @@ workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
 
 def load(url):
-    req = urllib2.Request(url, headers={'User-Agent': '4chan Browser'})
-    return urllib2.urlopen(req).read()
+    req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
+    return urllib.request.urlopen(req).read()
 
 def main():
     global args
@@ -26,7 +26,7 @@ def main():
     if args.date:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     else:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
     if args.thread[0][:4].lower() == 'http':
         download_thread(args.thread[0])
@@ -39,7 +39,7 @@ def download_thread(thread_link):
     if len(thread_link.split('/')) > 6:
         thread_tmp = thread_link.split('/')[6].split('#')[0]
 
-        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
             thread = thread_tmp
 
     directory = os.path.join(workpath, 'downloads', board, thread)
@@ -49,36 +49,36 @@ def download_thread(thread_link):
     while True:
         try:
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
-            for link, img in list(set(re.findall(regex, load(thread_link)))):
+            for link, img in list(set(re.findall(regex, str(load(thread_link))))):
                 img_path = os.path.join(directory, img)
                 if not os.path.exists(img_path):
                     data = load('https:' + link)
 
                     log.info(board + '/' + thread + '/' + img)
 
-                    with open(img_path, 'w') as f:
+                    with open(img_path, 'wb') as f:
                         f.write(data)
 
                     ##################################################################################
-                    # saves new images to a seperate directory
+                    # saves new images to a separate directory
                     # if you delete them there, they are not downloaded again
                     # if you delete an image in the 'downloads' directory, it will be downloaded again
                     copy_directory = os.path.join(workpath, 'new', board, thread)
                     if not os.path.exists(copy_directory):
                         os.makedirs(copy_directory)
                     copy_path = os.path.join(copy_directory, img)
-                    with open(copy_path, 'w') as f:
+                    with open(copy_path, 'wb') as f:
                         f.write(data)
                     ##################################################################################
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             time.sleep(10)
             try:
-                load(thread_link)    
-            except urllib2.HTTPError, err:
+                load(thread_link)
+            except urllib.error.HTTPError as err:
                 log.info('%s 404\'d', thread_link)
                 break
             continue
-        except (urllib2.URLError, httplib.BadStatusLine, httplib.IncompleteRead):
+        except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
             log.warning('Something went wrong')
 
         if not args.less:
@@ -89,7 +89,7 @@ def download_from_file(filename):
     running_links = []
     while True:
         processes = []
-        for link in filter(None, [line.strip() for line in open(filename) if line[:4] == 'http']):
+        for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]:
             if link not in running_links:
                 running_links.append(link)
                 log.info('Added ' + link)
@@ -100,7 +100,7 @@ def download_from_file(filename):
 
         if len(processes) == 0:
             log.warning(filename + ' empty')
-        
+
         if args.reload:
             time.sleep(60 * 5) # 5 minutes
             links_to_remove = []
@@ -112,7 +112,7 @@ def download_from_file(filename):
 
             for link in links_to_remove:
                 for line in fileinput.input(filename, inplace=True):
-                    print line.replace(link, '-' + link),
+                    print(line.replace(link, '-' + link), end=' ')
                 running_links.remove(link)
                 log.info('Removed ' + link)
             if not args.less:
