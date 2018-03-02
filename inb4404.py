@@ -1,9 +1,11 @@
 #!/usr/bin/python
 import urllib2, argparse, logging
 import os, re, time
-import httplib 
+import httplib
 import fileinput
 from multiprocessing import Process
+from bs4 import BeautifulSoup
+import requests
 
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
@@ -26,7 +28,7 @@ def main():
     if args.date:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     else:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
     if args.thread[0][:4].lower() == 'http':
         download_thread(args.thread[0])
@@ -34,12 +36,23 @@ def main():
         download_from_file(args.thread[0])
 
 def download_thread(thread_link):
+    # we'll use the BeautifulSoup to get the thread name as a link (thread-name-x-y-z)
+    s_url = requests.get(thread_link)
+    s_data = s_url.text
+    s_soup = BeautifulSoup(s_data, "lxml")
+
+    s_title = s_soup.find("link", rel="canonical")
+    s_title = s_title["href"]
+    s_title = s_title.split('/')[6]
+
     board = thread_link.split('/')[3]
-    thread = thread_link.split('/')[5].split('#')[0]
+    thread_id = thread_link.split('/')[5].split('#')[0]
+    thread = s_title + "-" + thread_id
+
     if len(thread_link.split('/')) > 6:
         thread_tmp = thread_link.split('/')[6].split('#')[0]
 
-        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
             thread = thread_tmp
 
     directory = os.path.join(workpath, 'downloads', board, thread)
@@ -73,7 +86,7 @@ def download_thread(thread_link):
         except urllib2.HTTPError, err:
             time.sleep(10)
             try:
-                load(thread_link)    
+                load(thread_link)
             except urllib2.HTTPError, err:
                 log.info('%s 404\'d', thread_link)
                 break
@@ -100,7 +113,7 @@ def download_from_file(filename):
 
         if len(processes) == 0:
             log.warning(filename + ' empty')
-        
+
         if args.reload:
             time.sleep(60 * 5) # 5 minutes
             links_to_remove = []
@@ -126,4 +139,3 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         pass
-
