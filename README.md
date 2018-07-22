@@ -3,9 +3,22 @@
 
 Python script to download all images/webms of a 4chan thread
 
-Just run
-'python inb4404.py -h'
-if you need any help.
+### Download Script ###
+
+The main script is called inb4404.py and can be called like this: `python inb4404.py [thread/filename]`
+
+> usage: inb4404.py [-h] [-n] [-r] [-l] [-d] thread
+> 
+> positional arguments:
+>   thread           url of the thread (or filename; one url per line)
+> 
+> optional arguments:
+>   -h, --help       show this help message and exit
+>   -n, --use-names  use thread names instead of the thread ids
+>                    (...4chan.org/board/thread/thread-id/thread-name)
+>   -r, --reload     reload the file every 5 minutes
+>   -l, --less       show less information (surpresses checking messages)
+>   -d, --date       show date as well
 
 You can parse a file instead of a thread url. In this file you can put as many links as you want, you just have to make sure that there's one url per line. A line is considered to be a url if the first 4 letters of the line start with 'http'.
 
