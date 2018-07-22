@@ -20,7 +20,6 @@ def main():
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the file every 5 minutes')
     parser.add_argument('-l', '--less', action='store_true', help='shows less information (surpresses checking messages)')
-    parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
     parser.add_argument('-d', '--date', action='store_true', help='show date as well')
     args = parser.parse_args()
 

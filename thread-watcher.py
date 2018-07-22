@@ -1,7 +1,7 @@
 #!/usr/bin/python
-import urllib2, argparse, logging
+import urllib.request, urllib.error, urllib.parse, argparse, logging
 import os, re, time
-import httplib
+import http.client
 import fileinput
 from multiprocessing import Process
 
@@ -16,8 +16,8 @@ workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
 
 def load(url):
-    req = urllib2.Request(url, headers={'User-Agent': '4chan Browser'})
-    return urllib2.urlopen(req).read()
+    req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
+    return urllib.request.urlopen(req).read()
 
 def main():
     global args
@@ -41,7 +41,7 @@ def main():
 
     current_threads = []
     regex = '"(\d+)":\{(?!"sub").*?"sub":"((?!").*?)"'
-    for threadid, title in list(set(re.findall(regex, load(catalog_url)))):
+    for threadid, title in list(set(re.findall(regex, load(catalog_url).decode('utf-8')))):
         if query not in title:
             continue
         current_threads.append(base_url + 'thread/' + threadid + '/' + name)
@@ -51,7 +51,7 @@ def main():
     
     new_threads = list(set(current_threads) - set(queue_threads))
     if args.verbose:
-        print new_threads
+        print(new_threads)
 
     if len(new_threads) > 0:
         with open(args.queuefile[0], 'a') as f:
