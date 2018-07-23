@@ -1,2 +1,9 @@
-.DS_Store
-.pyc
+*
+
+!.gitignore
+!inb4404.py
+!thread-watcher.py
+!LICENSE
+!README.md
+!/legacy/
+
