@@ -112,7 +112,7 @@ def download_from_file(filename):
 
             for link in links_to_remove:
                 for line in fileinput.input(filename, inplace=True):
-                    print(line.replace(link, '-' + link), end=' ')
+                    print(line.replace(link, '-' + link), end='')
                 running_links.remove(link)
                 log.info('Removed ' + link)
             if not args.less:
