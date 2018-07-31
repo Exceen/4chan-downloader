@@ -21,6 +21,7 @@ def main():
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
     parser.add_argument('-d', '--date', action='store_true', help='show date as well')
+    parser.add_argument('-c', '--with-counter', action='store_true', help='display a counter next the the image that has been downloaded')
     args = parser.parse_args()
 
     if args.date:
@@ -49,12 +50,21 @@ def download_thread(thread_link):
     while True:
         try:
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
-            for link, img in list(set(re.findall(regex, load(thread_link).decode('utf-8')))):
+            regex_result = list(set(re.findall(regex, load(thread_link).decode('utf-8'))))
+            regex_result = sorted(regex_result, key=lambda tup: tup[1])
+            regex_result_len = len(regex_result)            
+            regex_result_cnt = 1
+
+            for link, img in regex_result:
                 img_path = os.path.join(directory, img)
                 if not os.path.exists(img_path):
                     data = load('https:' + link)
 
-                    log.info(board + '/' + thread + '/' + img)
+                    output_text = board + '/' + thread + '/' + img
+                    if args.with_counter:
+                        output_text = '[' + str(regex_result_cnt).rjust(len(str(regex_result_len))) +  '/' + str(regex_result_len) + '] ' + output_text
+
+                    log.info(output_text)
 
                     with open(img_path, 'wb') as f:
                         f.write(data)
@@ -70,6 +80,8 @@ def download_thread(thread_link):
                     with open(copy_path, 'wb') as f:
                         f.write(data)
                     ##################################################################################
+                regex_result_cnt += 1
+
         except urllib.error.HTTPError as err:
             time.sleep(10)
             try:
