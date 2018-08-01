@@ -9,19 +9,15 @@ log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
 
-def load(url):
-    req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
-    return urllib.request.urlopen(req).read()
-
 def main():
     global args
     parser = argparse.ArgumentParser(description='inb4404')
     parser.add_argument('thread', nargs=1, help='url of the thread (or filename; one url per line)')
+    parser.add_argument('-c', '--with-counter', action='store_true', help='show a counter next the the image that has been downloaded')
+    parser.add_argument('-d', '--date', action='store_true', help='show date as well')
+    parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
-    parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
-    parser.add_argument('-d', '--date', action='store_true', help='show date as well')
-    parser.add_argument('-c', '--with-counter', action='store_true', help='display a counter next the the image that has been downloaded')
     args = parser.parse_args()
 
     if args.date:
@@ -33,6 +29,10 @@ def main():
         download_thread(args.thread[0])
     else:
         download_from_file(args.thread[0])
+
+def load(url):
+    req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
+    return urllib.request.urlopen(req).read()
 
 def download_thread(thread_link):
     board = thread_link.split('/')[3]
@@ -91,7 +91,8 @@ def download_thread(thread_link):
                 break
             continue
         except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
-            log.warning('Something went wrong')
+            if not args.less:
+                log.warning('Something went wrong')
 
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
