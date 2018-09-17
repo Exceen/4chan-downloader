@@ -25,10 +25,11 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
 
-    if args.thread[0][:4].lower() == 'http':
-        download_thread(args.thread[0])
+    thread = args.thread[0].strip()
+    if thread[:4].lower() == 'http':
+        download_thread(thread)
     else:
-        download_from_file(args.thread[0])
+        download_from_file(thread)
 
 def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
