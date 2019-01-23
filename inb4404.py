@@ -92,11 +92,11 @@ def download_thread(thread_link):
                     ##################################################################################
                 regex_result_cnt += 1
 
-        except urllib.error.HTTPError as err:
+        except urllib.error.HTTPError:
             time.sleep(10)
             try:
                 load(thread_link)
-            except urllib.error.HTTPError as err:
+            except urllib.error.HTTPError:
                 log.info('%s 404\'d', thread_link)
                 break
             continue
