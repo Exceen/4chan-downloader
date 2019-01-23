@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 import urllib.request, urllib.error, urllib.parse, argparse, logging
 import os, re, time
-import http.client 
+import http.client
 import fileinput
 from multiprocessing import Process
 
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
+
 
 def main():
     global args
@@ -23,7 +24,7 @@ def main():
     if args.date:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     else:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
     thread = args.thread[0].strip()
     if thread[:4].lower() == 'http':
@@ -31,9 +32,11 @@ def main():
     else:
         download_from_file(thread)
 
+
 def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
     return urllib.request.urlopen(req).read()
+
 
 def download_thread(thread_link):
     board = thread_link.split('/')[3]
@@ -41,7 +44,7 @@ def download_thread(thread_link):
     if len(thread_link.split('/')) > 6:
         thread_tmp = thread_link.split('/')[6].split('#')[0]
 
-        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
             thread = thread_tmp
 
     directory = os.path.join(workpath, 'downloads', board, thread)
@@ -53,7 +56,7 @@ def download_thread(thread_link):
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
             regex_result = list(set(re.findall(regex, load(thread_link).decode('utf-8'))))
             regex_result = sorted(regex_result, key=lambda tup: tup[1])
-            regex_result_len = len(regex_result)            
+            regex_result_len = len(regex_result)
             regex_result_cnt = 1
 
             for link, img in regex_result:
@@ -63,7 +66,7 @@ def download_thread(thread_link):
 
                     output_text = board + '/' + thread + '/' + img
                     if args.with_counter:
-                        output_text = '[' + str(regex_result_cnt).rjust(len(str(regex_result_len))) +  '/' + str(regex_result_len) + '] ' + output_text
+                        output_text = '[' + str(regex_result_cnt).rjust(len(str(regex_result_len))) + '/' + str(regex_result_len) + '] ' + output_text
 
                     log.info(output_text)
 
@@ -86,7 +89,7 @@ def download_thread(thread_link):
         except urllib.error.HTTPError as err:
             time.sleep(10)
             try:
-                load(thread_link)    
+                load(thread_link)
             except urllib.error.HTTPError as err:
                 log.info('%s 404\'d', thread_link)
                 break
@@ -98,6 +101,7 @@ def download_thread(thread_link):
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
         time.sleep(20)
+
 
 def download_from_file(filename):
     running_links = []
@@ -114,9 +118,9 @@ def download_from_file(filename):
 
         if len(processes) == 0:
             log.warning(filename + ' empty')
-        
+
         if args.reload:
-            time.sleep(60 * 5) # 5 minutes
+            time.sleep(60 * 5)  # 5 minutes
             links_to_remove = []
             for process, link in processes:
                 if not process.is_alive():
@@ -130,7 +134,7 @@ def download_from_file(filename):
                 running_links.remove(link)
                 log.info('Removed ' + link)
             if not args.less:
-                log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
+                log.info('Reloading ' + args.thread[0])  # thread = filename here; reloading on next loop
         else:
             break
 
@@ -140,4 +144,3 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         pass
-
