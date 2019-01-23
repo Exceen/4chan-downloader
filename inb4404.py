@@ -1,8 +1,14 @@
 #!/usr/bin/python3
-import urllib.request, urllib.error, urllib.parse, argparse, logging
-import os, re, time
-import http.client
+import os
+import re
+import time
+import logging
+import argparse
 import fileinput
+import http.client
+import urllib.request
+import urllib.error
+import urllib.parse
 from multiprocessing import Process
 
 log = logging.getLogger('inb4404')
