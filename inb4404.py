@@ -24,6 +24,7 @@ def main():
     parser.add_argument('-d', '--date', action='store_true', help='show date as well')
     parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
+    parser.add_argument('-p', '--download-path', type=str, metavar='PATH', help='path to add downloaded images to')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     args = parser.parse_args()
 
@@ -59,8 +60,12 @@ def download_thread(thread_link):
         if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
             thread = thread_tmp
 
-    # Define directory download path
-    directory = os.path.join(workpath, 'downloads', board, thread)
+    if args.download_path is None:
+        # Save to local downloads directory
+        directory = os.path.join(workpath, 'downloads', board, thread)
+    else:
+        # Save to specified path
+        directory = os.path.join(args.download_path, 'downloads', board, thread)
 
     # If download directory doesn't exist, create it
     if not os.path.exists(directory):
@@ -97,7 +102,7 @@ def download_thread(thread_link):
                     # saves new images to a seperate directory
                     # if you delete them there, they are not downloaded again
                     # if you delete an image in the 'downloads' directory, it will be downloaded again
-                    copy_directory = os.path.join(workpath, 'new', board, thread)
+                    copy_directory = os.path.join(args.download_path, 'new', board, thread)
                     if not os.path.exists(copy_directory):
                         os.makedirs(copy_directory)
                     copy_path = os.path.join(copy_directory, img)
