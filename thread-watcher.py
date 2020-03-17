@@ -18,7 +18,6 @@ THREAD_URL_TEMPLATE = 'https://boards.4chan.org/{board}/thread/{id}/{name}'
 def get_threads(board, url_template=None):
     template = url_template or API_URL_TEMPLATE
     url = template.format(board=board)
-    print(url)
     req = request.Request(url, headers={'User-Agent': '4chan Browser',
                                         'Content-Type': 'application/json'})
     content = request.urlopen(req).read().decode('utf-8')
