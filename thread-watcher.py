@@ -3,6 +3,7 @@ from itertools import chain
 from urllib import request
 import argparse
 import json
+import re
 
 # TODO
 # add argument to have something like vg/monster-hunter/ and inside that dir all threads separated by their id
@@ -29,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser(description='thread-watcher')
     parser.add_argument('-v', '--verbose', action='store_true', help='verbose')
     parser.add_argument('-b', '--board', help='board', required=True)
-    parser.add_argument('-q', '--query', help='search term', required=True)
+    parser.add_argument('-q', '--query', help='search term (supports regex)', required=True)
     parser.add_argument('-f', '--queuefile', help='queue file', required=True)
     parser.add_argument('-n', '--naming', help='dir name for saved threads', required=True)
     parser.add_argument('-u', '--thread-url', help='base url of the chans boards (default: https://boards.4chan.org/{board}/thread/{id}/{name})')
@@ -40,6 +41,7 @@ def main():
     name = args.naming.lower().replace(' ', '-')
     file = open(args.queuefile, 'a+')
     file.seek(0)
+    query = re.compile(args.query)
 
     ignored_lines = ['#', '-', '\n']
     queue_threads = [line.strip() for line in file if line[0] not in ignored_lines]
@@ -47,7 +49,7 @@ def main():
     for thread in get_threads(args.board, args.api_url):
         thread_url = url_template.format(board=args.board, id=thread['no'], name=name)
 
-        if args.query in thread.get('sub', thread.get('com', '')) and thread_url not in queue_threads:
+        if query.search(thread.get('sub', thread.get('com', ''))) and thread_url not in queue_threads:
             file.write('%s\n' % thread_url)
             if args.verbose:
                 print(thread_url)
