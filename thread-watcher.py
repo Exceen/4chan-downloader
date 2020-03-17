@@ -1,9 +1,10 @@
 #!/usr/bin/python
+from itertools import chain
 from urllib import request
 import argparse
+import json
 import logging
 import os
-import re
 
 # TODO
 # add argument to have something like vg/monster-hunter/ and inside that dir all threads separated by their id
@@ -13,11 +14,21 @@ import re
 
 log = logging.getLogger('thread-watcher')
 workpath = os.path.dirname(os.path.realpath(__file__))
+API_URL_BASE = 'https://a.4cdn.org'
+URL_BASE = 'https://boards.4chan.org'
 
 
-def load(url):
-    req = request.Request(url, headers={'User-Agent': '4chan Browser'})
-    return request.urlopen(req).read()
+def load_catalog(board):
+    url = '{base}/{board}/catalog.json'.format(base=API_URL_BASE, board=board)
+    req = request.Request(url, headers={'User-Agent': '4chan Browser',
+                                        'Content-Type': 'application/json'})
+    content = request.urlopen(req).read().decode('utf-8')
+    return json.loads(content)
+
+
+def get_threads(board):
+    catalog = load_catalog(board)
+    return chain.from_iterable([page['threads'] for page in catalog])
 
 
 def main():
@@ -30,16 +41,16 @@ def main():
     args = parser.parse_args()
 
     name = args.naming.lower().replace(' ', '-')
-    query = args.query
-    base_url = 'https://boards.4chan.org/' + args.board + '/'
-    catalog_url = base_url + 'catalog'
+    thread_url = '{base}/{board}/%d/{name}'.format(
+        base=URL_BASE,
+        board=args.board,
+        name=name,
+    )
 
     current_threads = []
-    regex = '"(\d+)":\{(?!"sub").*?"sub":"((?!").*?)"'
-    for threadid, title in list(set(re.findall(regex, load(catalog_url).decode('utf-8')))):
-        if query not in title:
-            continue
-        current_threads.append(base_url + 'thread/' + threadid + '/' + name)
+    for thread in get_threads(args.board):
+        if args.query in thread.get('sub', ''):
+            current_threads.append(thread_url % thread['no'])
 
     ignored_lines = ['#', '-', '\n']
     queue_threads = [line.strip() for line in open(args.queuefile, 'r') if line[0] not in ignored_lines]
