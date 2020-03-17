@@ -52,16 +52,12 @@ def main():
     ignored_lines = ['#', '-', '\n']
     queue_threads = [line.strip() for line in file if line[0] not in ignored_lines]
 
-    threads = []
     for thread in get_threads(args.board):
         url = thread_url % thread['no']
         if args.query in thread.get('sub', '') and url not in queue_threads:
-            threads.append(url)
-
-    if args.verbose:
-        print(threads)
-
-    file.writelines(threads)
+            file.write('%s\n' % url)
+            if args.verbose:
+                print(url)
 
 
 if __name__ == '__main__':
