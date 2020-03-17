@@ -15,9 +15,11 @@ log = logging.getLogger('thread-watcher')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
 
+
 def load(url):
     req = request.Request(url, headers={'User-Agent': '4chan Browser'})
     return request.urlopen(req).read()
+
 
 def main():
     global args
@@ -59,9 +61,9 @@ def main():
                 f.write(thread)
                 f.write('\n')
 
+
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         pass
-
