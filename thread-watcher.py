@@ -3,8 +3,6 @@ from itertools import chain
 from urllib import request
 import argparse
 import json
-import logging
-import os
 
 # TODO
 # add argument to have something like vg/monster-hunter/ and inside that dir all threads separated by their id
@@ -12,22 +10,18 @@ import os
 # ./thread-watcher.py -b vg -q mhg -f queue.txt -n "Monster Hunter"
 
 
-log = logging.getLogger('thread-watcher')
-workpath = os.path.dirname(os.path.realpath(__file__))
-API_URL_BASE = 'https://a.4cdn.org'
-URL_BASE = 'https://boards.4chan.org'
+API_URL_TEMPLATE = 'https://a.4cdn.org/{board}/catalog.json'
+THREAD_URL_TEMPLATE = 'https://boards.4chan.org/{board}/thread/{id}/{name}'
 
 
-def load_catalog(board):
-    url = '{base}/{board}/catalog.json'.format(base=API_URL_BASE, board=board)
+def get_threads(board, url_template=None):
+    template = url_template or API_URL_TEMPLATE
+    url = template.format(board=board)
+    print(url)
     req = request.Request(url, headers={'User-Agent': '4chan Browser',
                                         'Content-Type': 'application/json'})
     content = request.urlopen(req).read().decode('utf-8')
-    return json.loads(content)
-
-
-def get_threads(board):
-    catalog = load_catalog(board)
+    catalog = json.loads(content)
     return chain.from_iterable([page['threads'] for page in catalog])
 
 
@@ -38,26 +32,25 @@ def main():
     parser.add_argument('-q', '--query', help='search term', required=True)
     parser.add_argument('-f', '--queuefile', help='queue file', required=True)
     parser.add_argument('-n', '--naming', help='dir name for saved threads', required=True)
+    parser.add_argument('-u', '--thread-url', help='base url of the chans boards (default: https://boards.4chan.org/{board}/thread/{id}/{name})')
+    parser.add_argument('-a', '--api-url', help='base url of the chans api (default: https://a.4cdn.org/{board}/catalog.json)')
     args = parser.parse_args()
 
+    url_template = args.thread_url or THREAD_URL_TEMPLATE
     name = args.naming.lower().replace(' ', '-')
-    thread_url = '{base}/{board}/%d/{name}'.format(
-        base=URL_BASE,
-        board=args.board,
-        name=name,
-    )
     file = open(args.queuefile, 'a+')
     file.seek(0)
 
     ignored_lines = ['#', '-', '\n']
     queue_threads = [line.strip() for line in file if line[0] not in ignored_lines]
 
-    for thread in get_threads(args.board):
-        url = thread_url % thread['no']
-        if args.query in thread.get('sub', '') and url not in queue_threads:
-            file.write('%s\n' % url)
+    for thread in get_threads(args.board, args.api_url):
+        thread_url = url_template.format(board=args.board, id=thread['no'], name=name)
+
+        if args.query in thread.get('sub', thread.get('com', '')) and thread_url not in queue_threads:
+            file.write('%s\n' % thread_url)
             if args.verbose:
-                print(url)
+                print(thread_url)
 
 
 if __name__ == '__main__':
