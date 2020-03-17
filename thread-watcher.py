@@ -46,24 +46,22 @@ def main():
         board=args.board,
         name=name,
     )
-
-    current_threads = []
-    for thread in get_threads(args.board):
-        if args.query in thread.get('sub', ''):
-            current_threads.append(thread_url % thread['no'])
+    file = open(args.queuefile, 'a+')
+    file.seek(0)
 
     ignored_lines = ['#', '-', '\n']
-    queue_threads = [line.strip() for line in open(args.queuefile, 'r') if line[0] not in ignored_lines]
+    queue_threads = [line.strip() for line in file if line[0] not in ignored_lines]
 
-    new_threads = list(set(current_threads) - set(queue_threads))
+    threads = []
+    for thread in get_threads(args.board):
+        url = thread_url % thread['no']
+        if args.query in thread.get('sub', '') and url not in queue_threads:
+            threads.append(url)
+
     if args.verbose:
-        print(new_threads)
+        print(threads)
 
-    if len(new_threads) > 0:
-        with open(args.queuefile, 'a') as f:
-            for thread in new_threads:
-                f.write(thread)
-                f.write('\n')
+    file.writelines(threads)
 
 
 if __name__ == '__main__':
