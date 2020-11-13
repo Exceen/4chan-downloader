@@ -27,7 +27,7 @@ def main():
 
     thread = args.thread[0].strip()
     if thread[:4].lower() == 'http':
-        download_thread(thread)
+        download_thread(thread, args)
     else:
         download_from_file(thread)
 
@@ -35,7 +35,7 @@ def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
     return urllib.request.urlopen(req).read()
 
-def download_thread(thread_link):
+def download_thread(thread_link, args):
     board = thread_link.split('/')[3]
     thread = thread_link.split('/')[5].split('#')[0]
     if len(thread_link.split('/')) > 6:
@@ -108,7 +108,7 @@ def download_from_file(filename):
                 running_links.append(link)
                 log.info('Added ' + link)
 
-            process = Process(target=download_thread, args=(link, ))
+            process = Process(target=download_thread, args=(link, args, ))
             process.start()
             processes.append([process, link])
 
