@@ -37,6 +37,7 @@ def main():
             import bs4
         except ImportError:
             logging.error("Could not import BeautifulSoup! Disabling --title option...")
+            args.title = False
 
 def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
