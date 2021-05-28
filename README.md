@@ -22,6 +22,7 @@ optional arguments:
   -n, --use-names     use thread names instead of the thread ids
                       (...4chan.org/board/thread/thread-id/thread-name)
   -r, --reload        reload the queue file every 5 minutes
+  -t, --title         save original filenames
 ```
 
 You can parse a file instead of a thread url. In this file you can put as many links as you want, you just have to make sure that there's one url per line. A line is considered to be a url if the first 4 letters of the line start with 'http'.
