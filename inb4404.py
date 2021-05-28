@@ -18,6 +18,7 @@ def main():
     parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
+    parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
     args = parser.parse_args()
 
     if args.date:
@@ -31,9 +32,31 @@ def main():
     else:
         download_from_file(thread)
 
+    if args.title:
+        try:
+            import bs4
+        except ImportError:
+            logging.error("Could not import BeautifulSoup! Disabling --title option...")
+
 def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
     return urllib.request.urlopen(req).read()
+
+def get_title_list(html_content):
+    ret = list()
+
+    from bs4 import BeautifulSoup
+    parsed = BeautifulSoup(html_content, 'html.parser')
+    divs = parsed.find_all("div", {"class": "fileText"})
+
+    for i in divs:
+        current_child = i.findChildren("a", recursive = False)[0]
+        try:
+            ret.append(current_child["title"])
+        except KeyError:
+            ret.append(current_child.text)
+
+    return ret
 
 def download_thread(thread_link, args):
     board = thread_link.split('/')[3]
@@ -51,12 +74,22 @@ def download_thread(thread_link, args):
     while True:
         try:
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
-            regex_result = list(set(re.findall(regex, load(thread_link).decode('utf-8'))))
+            html_result = load(thread_link).decode('utf-8')
+            regex_result = list(set(re.findall(regex, html_result)))
+
             regex_result = sorted(regex_result, key=lambda tup: tup[1])
-            regex_result_len = len(regex_result)            
+            regex_result_len = len(regex_result)
             regex_result_cnt = 1
 
-            for link, img in regex_result:
+            if args.title:
+                all_titles = get_title_list(html_result)
+
+            for enum_index, enum_tuple in enumerate(regex_result):
+                link, img = enum_tuple
+
+                if args.title:
+                    img = all_titles[enum_index]
+
                 img_path = os.path.join(directory, img)
                 if not os.path.exists(img_path):
                     data = load('https:' + link)
