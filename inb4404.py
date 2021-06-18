@@ -68,15 +68,15 @@ def download_thread(thread_link, args):
         if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
             thread = thread_tmp
 
-    directory = os.path.join(workpath, 'downloads', board, thread)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
     while True:
         try:
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
             html_result = load(thread_link).decode('utf-8')
             regex_result = list(set(re.findall(regex, html_result)))
+
+            directory = os.path.join(workpath, 'downloads', board, thread)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
             regex_result = sorted(regex_result, key=lambda tup: tup[1])
             regex_result_len = len(regex_result)
