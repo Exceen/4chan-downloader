@@ -59,6 +59,14 @@ def get_title_list(html_content):
 
     return ret
 
+def call_download_thread(thread_link, args):
+    try:
+        download_thread(thread_link, args)
+    except KeyboardInterrupt:
+        pass
+
+    return
+
 def download_thread(thread_link, args):
     board = thread_link.split('/')[3]
     thread = thread_link.split('/')[5].split('#')[0]
@@ -142,7 +150,7 @@ def download_from_file(filename):
                 running_links.append(link)
                 log.info('Added ' + link)
 
-            process = Process(target=download_thread, args=(link, args, ))
+            process = Process(target=call_download_thread, args=(link, args, ))
             process.start()
             processes.append([process, link])
 
