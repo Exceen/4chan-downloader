@@ -59,6 +59,14 @@ def get_title_list(html_content):
 
     return ret
 
+def call_download_thread(thread_link, args):
+    try:
+        download_thread(thread_link, args)
+    except KeyboardInterrupt:
+        pass
+
+    return
+
 def download_thread(thread_link, args):
     board = thread_link.split('/')[3]
     thread = thread_link.split('/')[5].split('#')[0]
@@ -68,15 +76,15 @@ def download_thread(thread_link, args):
         if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
             thread = thread_tmp
 
-    directory = os.path.join(workpath, 'downloads', board, thread)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
     while True:
         try:
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
             html_result = load(thread_link).decode('utf-8')
             regex_result = list(set(re.findall(regex, html_result)))
+
+            directory = os.path.join(workpath, 'downloads', board, thread)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
             regex_result = sorted(regex_result, key=lambda tup: tup[1])
             regex_result_len = len(regex_result)
@@ -142,7 +150,7 @@ def download_from_file(filename):
                 running_links.append(link)
                 log.info('Added ' + link)
 
-            process = Process(target=download_thread, args=(link, args, ))
+            process = Process(target=call_download_thread, args=(link, args, ))
             process.start()
             processes.append([process, link])
 
