@@ -125,17 +125,18 @@ def download_thread(thread_link, args):
                     ##################################################################################
                 regex_result_cnt += 1
 
-        except urllib.error.HTTPError as err:
+        except urllib.error.HTTPError:
             time.sleep(10)
             try:
                 load(thread_link)    
-            except urllib.error.HTTPError as err:
+            except urllib.error.HTTPError:
                 log.info('%s 404\'d', thread_link)
                 break
             continue
         except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
             if not args.less:
-                log.warning('Something went wrong')
+                log.fatal('Something went wrong')
+                raise
 
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
