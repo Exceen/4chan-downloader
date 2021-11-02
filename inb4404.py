@@ -134,9 +134,8 @@ def download_thread(thread_link, args):
                 break
             continue
         except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
-            if not args.less:
-                log.fatal('Something went wrong')
-                raise
+            log.fatal(thread_link + ' crashed!')
+            raise
 
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
