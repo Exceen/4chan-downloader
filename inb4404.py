@@ -21,7 +21,7 @@ def main():
     parser.add_argument('-s', '--sleep', action='store', help='sleep `N` seconds between every download', metavar='N') # TODO
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
 
-    parser.add_argument('--single-process', action='store_true', help='disable multiprocessing, download one thread at a time') # TODO
+    parser.add_argument('--single-process', action='store_true', help='disable multiprocessing, download one thread at a time')
 
     args = parser.parse_args()
 
@@ -145,21 +145,32 @@ def download_thread(thread_link, args):
             log.info('Checking ' + board + '/' + thread)
         time.sleep(20)
 
+def run_single_process(links_list):
+    for l in links_list:
+        call_download_thread(l, args)
+
+def run_multiple_process(links_list, processes_list):
+    for l in links_list:
+        process = Process(target=call_download_thread, args=(l, args, ))
+        process.start()
+        processes_list.append([process, l])
+
+        if len(processes_list) == 0:
+            log.warning(filename + ' empty')
+
 def download_from_file(filename):
     running_links = []
     while True:
         processes = []
-        for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]:
+        for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]: # Fix this line
             if link not in running_links:
                 running_links.append(link)
                 log.info('Added ' + link)
 
-            process = Process(target=call_download_thread, args=(link, args, ))
-            process.start()
-            processes.append([process, link])
-
-        if len(processes) == 0:
-            log.warning(filename + ' empty')
+        if args.single_process:
+            run_single_process(running_links)
+        else:
+            run_multiple_process(running_links, processes)
 
         if args.reload:
             time.sleep(60 * 5) # 5 minutes
