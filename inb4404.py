@@ -18,7 +18,11 @@ def main():
     parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
+    parser.add_argument('-s', '--sleep', action='store', help='sleep `N` seconds between every download', metavar='N') # TODO
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
+
+    parser.add_argument('--single-process', action='store_true', help='disable multiprocessing, download one thread at a time') # TODO
+
     args = parser.parse_args()
 
     if args.date:
