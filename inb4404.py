@@ -162,7 +162,7 @@ def download_from_file(filename):
     running_links = []
     while True:
         processes = []
-        for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]: # Fix this line
+        for link in [line.strip() for line in open(filename) if line[:4] == 'http']:
             if link not in running_links:
                 running_links.append(link)
                 log.info('Added ' + link)
