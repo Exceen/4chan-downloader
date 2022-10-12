@@ -155,9 +155,6 @@ def run_multiple_process(links_list, processes_list):
         process.start()
         processes_list.append([process, l])
 
-        if len(processes_list) == 0:
-            log.warning(filename + ' empty')
-
 def download_from_file(filename):
     running_links = []
     while True:
@@ -166,6 +163,10 @@ def download_from_file(filename):
             if link not in running_links:
                 running_links.append(link)
                 log.info('Added ' + link)
+
+        if len(running_links) == 0:
+            log.fatal('`%s` is empty!' % filename)
+            return
 
         if args.single_process:
             run_single_process(running_links)
