@@ -147,7 +147,7 @@ def download_thread(thread_link, args):
 
 def run_single_process(links_list):
     for l in links_list:
-        call_download_thread(l, args)
+        download_thread(l, args)
 
 def run_multiple_process(links_list, processes_list):
     for l in links_list:
