@@ -5,7 +5,6 @@ import http.client
 import fileinput
 from multiprocessing import Process
 from multiprocessing import Lock, current_process, Manager
-#import queue
 
 
 log = logging.getLogger('inb4404')
