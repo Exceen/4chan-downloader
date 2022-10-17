@@ -43,7 +43,9 @@ def main():
 
     thread = args.thread[0].strip()
     if thread[:4].lower() == 'http':
-        download_thread(thread, args)
+        while True:
+            download_thread(thread, args)
+            time.sleep(20)
     else:
         download_from_file(thread)
 
