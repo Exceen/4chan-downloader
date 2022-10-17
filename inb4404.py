@@ -1,13 +1,24 @@
 #!/usr/bin/python3
 import urllib.request, urllib.error, urllib.parse, argparse, logging
 import os, re, time
-import http.client 
+import http.client
 import fileinput
 from multiprocessing import Process
+from multiprocessing import Lock, Queue, current_process, Manager
+import queue
+
 
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
+call_download_thread_while_loop_sleep_time = .20
+download_from_file_while_loop_sleep_time = .20
+queue_cleanup_timer = 300 #in seconds, how often to check for dead links and mark them dead in the config file
+thread_check_timer = 20 #in seconds, how often to queue up all threads to check for new content
+manager = Manager()
+tasks_to_accomplish = manager.list()
+links_to_remove = manager.list() #queue used to keep track of threads to remove from config
+
 
 def main():
     global args
@@ -19,12 +30,13 @@ def main():
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
+    parser.add_argument('-p', '--parallel-threads', type=int, default=4, help='Number of parallel threads to run at once. Default is 4')
     args = parser.parse_args()
 
     if args.date:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     else:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
     thread = args.thread[0].strip()
     if thread[:4].lower() == 'http':
@@ -43,6 +55,7 @@ def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
     return urllib.request.urlopen(req).read()
 
+
 def get_title_list(html_content):
     ret = list()
 
@@ -59,127 +72,155 @@ def get_title_list(html_content):
 
     return ret
 
-def call_download_thread(thread_link, args):
-    try:
-        download_thread(thread_link, args)
-    except KeyboardInterrupt:
-        pass
+
+def call_download_thread(que, links_to_remove, running_tasks):
+    while True:
+        try:
+            #time.sleep(call_download_thread_while_loop_sleep_time)
+            #thread_link, args = que.get()
+            if len(que) == 0:
+                time.sleep(call_download_thread_while_loop_sleep_time)
+                continue
+            thread_link = que.pop(0)
+            running_tasks.append(thread_link)
+            download_thread(thread_link, links_to_remove)
+            running_tasks.remove(thread_link)
+        except KeyboardInterrupt:
+            break
+        except queue.Empty:
+            pass
 
     return
 
-def download_thread(thread_link, args):
+
+def download_thread(thread_link, links_to_remove):
+    print("running!")
     board = thread_link.split('/')[3]
     thread = thread_link.split('/')[5].split('#')[0]
     if len(thread_link.split('/')) > 6:
         thread_tmp = thread_link.split('/')[6].split('#')[0]
 
-        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
             thread = thread_tmp
 
-    while True:
-        try:
-            regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
-            html_result = load(thread_link).decode('utf-8')
-            regex_result = list(set(re.findall(regex, html_result)))
+    try:
+        regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
+        html_result = load(thread_link).decode('utf-8')
+        regex_result = list(set(re.findall(regex, html_result)))
 
-            directory = os.path.join(workpath, 'downloads', board, thread)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
+        directory = os.path.join(workpath, 'downloads', board, thread)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
-            regex_result = sorted(regex_result, key=lambda tup: tup[1])
-            regex_result_len = len(regex_result)
-            regex_result_cnt = 1
+        regex_result = sorted(regex_result, key=lambda tup: tup[1])
+        regex_result_len = len(regex_result)
+        regex_result_cnt = 1
+
+        if args.title:
+            all_titles = get_title_list(html_result)
+
+        for enum_index, enum_tuple in enumerate(regex_result):
+            link, img = enum_tuple
 
             if args.title:
-                all_titles = get_title_list(html_result)
+                img = all_titles[enum_index]
 
-            for enum_index, enum_tuple in enumerate(regex_result):
-                link, img = enum_tuple
+            img_path = os.path.join(directory, img)
+            if not os.path.exists(img_path):
+                data = load('https:' + link)
 
-                if args.title:
-                    img = all_titles[enum_index]
+                output_text = board + '/' + thread + '/' + img
+                if args.with_counter:
+                    output_text = '[' + str(regex_result_cnt).rjust(len(str(regex_result_len))) +  '/' + str(regex_result_len) + '] ' + output_text
 
-                img_path = os.path.join(directory, img)
-                if not os.path.exists(img_path):
-                    data = load('https:' + link)
+                log.info(output_text)
 
-                    output_text = board + '/' + thread + '/' + img
-                    if args.with_counter:
-                        output_text = '[' + str(regex_result_cnt).rjust(len(str(regex_result_len))) +  '/' + str(regex_result_len) + '] ' + output_text
+                with open(img_path, 'wb') as f:
+                    f.write(data)
 
-                    log.info(output_text)
+                ##################################################################################
+                # saves new images to a seperate directory
+                # if you delete them there, they are not downloaded again
+                # if you delete an image in the 'downloads' directory, it will be downloaded again
+                copy_directory = os.path.join(workpath, 'new', board, thread)
+                if not os.path.exists(copy_directory):
+                    os.makedirs(copy_directory)
+                copy_path = os.path.join(copy_directory, img)
+                with open(copy_path, 'wb') as f:
+                    f.write(data)
+                ##################################################################################
+            regex_result_cnt += 1
 
-                    with open(img_path, 'wb') as f:
-                        f.write(data)
-
-                    ##################################################################################
-                    # saves new images to a seperate directory
-                    # if you delete them there, they are not downloaded again
-                    # if you delete an image in the 'downloads' directory, it will be downloaded again
-                    copy_directory = os.path.join(workpath, 'new', board, thread)
-                    if not os.path.exists(copy_directory):
-                        os.makedirs(copy_directory)
-                    copy_path = os.path.join(copy_directory, img)
-                    with open(copy_path, 'wb') as f:
-                        f.write(data)
-                    ##################################################################################
-                regex_result_cnt += 1
-
+    except urllib.error.HTTPError:
+        time.sleep(10)
+        try:
+            load(thread_link)
         except urllib.error.HTTPError:
-            time.sleep(10)
-            try:
-                load(thread_link)    
-            except urllib.error.HTTPError:
-                log.info('%s 404\'d', thread_link)
-                break
-            continue
-        except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
-            log.fatal(thread_link + ' crashed!')
-            raise
+            log.info('%s 404\'d', thread_link)
+            links_to_remove.append(thread_link)
+    except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
+        log.fatal(thread_link + ' crashed!')
+        raise
 
-        if not args.less:
-            log.info('Checking ' + board + '/' + thread)
-        time.sleep(20)
+    if not args.less:
+        log.info('Checking ' + board + '/' + thread)
+
+    return True
+
 
 def download_from_file(filename):
     running_links = []
-    while True:
-        processes = []
-        for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]:
-            if link not in running_links:
-                running_links.append(link)
-                log.info('Added ' + link)
+    last_config_reload = time.time()
+    last_queue_check = time.time()
+    running_tasks = []
 
-            process = Process(target=call_download_thread, args=(link, args, ))
-            process.start()
-            processes.append([process, link])
+    processes = []
 
-        if len(processes) == 0:
-            log.warning(filename + ' empty')
-        
-        if args.reload:
-            time.sleep(60 * 5) # 5 minutes
-            links_to_remove = []
-            for process, link in processes:
-                if not process.is_alive():
-                    links_to_remove.append(link)
-                else:
-                    process.terminate()
+    for w in range(args.parallel_threads):
+        p = Process(target=call_download_thread, args=(tasks_to_accomplish, links_to_remove, running_tasks))
+        processes.append(p)
+        p.start()
 
-            for link in links_to_remove:
-                for line in fileinput.input(filename, inplace=True):
-                    print(line.replace(link, '-' + link), end='')
-                running_links.remove(link)
-                log.info('Removed ' + link)
-            if not args.less:
-                log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
-        else:
-            break
+    try:
+        while True:
 
+            for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]:
+                if link not in running_links:
+                    running_links.append(link)
+                    log.info('Added ' + link)
+                    #tasks_to_accomplish.put((link,args))
+                    tasks_to_accomplish.append(link)
+
+            if time.time() >= (last_queue_check + thread_check_timer):
+                for i in running_links:
+                    if i not in tasks_to_accomplish:
+                        tasks_to_accomplish.append(i)
+                last_queue_check = time.time()
+
+            if args.reload and time.time() >= (last_config_reload + queue_cleanup_timer): # Non blocking 5 minute interval check
+                #links_to_remove = []
+
+
+                for link in links_to_remove:
+                    for line in fileinput.input(filename, inplace=True):
+                        print(line.replace(link, '-' + link), end='')
+                    running_links.remove(link)
+                    log.info('Removed ' + link)
+                if not args.less:
+                    log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
+                last_config_reload = time.time()
+
+            time.sleep(.25)
+            print(len(tasks_to_accomplish))
+    except KeyboardInterrupt:
+        for p in processes: #close processes
+            p.terminate()
+        pass
+
+    return
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         pass
-
