@@ -11,11 +11,14 @@ from multiprocessing import Lock, current_process, Manager
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
-call_download_thread_while_loop_sleep_time = .20
-download_from_file_while_loop_sleep_time = .20
+###
+# Danger: making these sleep timers too low can cause their corresponding while loops to execute too quickly, bogging down the CPU
+call_download_thread_while_loop_sleep_time = .25
+download_from_file_while_loop_sleep_time = .25
+###
 queue_cleanup_timer = 30 #in seconds, how often to check for dead links and mark them dead in the config file
 thread_check_timer = 20 #in seconds, how often to queue up all threads to check for new content
-manager = Manager()
+manager = Manager() #getting a manager object we can use to create managed data types
 tasks_to_accomplish = manager.list() #queue for threads to pull work out of
 links_to_remove = manager.list() #queue used to keep track of threads to remove from config
 
@@ -85,8 +88,6 @@ def call_download_thread(que, links_to_remove):
             break
         except:
             pass
-
-    return
 
 
 def download_thread(thread_link, links_to_remove):
@@ -184,12 +185,14 @@ def download_from_file(filename):
                     log.info('Added ' + link)
                     tasks_to_accomplish.append(link)
 
+            # if enough time has passed, recheck list of running threads
             if time.time() >= (last_queue_check + thread_check_timer):
                 for i in running_links:
-                    if i not in tasks_to_accomplish:
+                    if i not in tasks_to_accomplish: # check if the link we're adding is already in the queue. only add if it isnt
                         tasks_to_accomplish.append(i)
                 last_queue_check = time.time()
 
+            # check if there are any links that have died, and mark them as dead so they are no longer checked
             if args.reload and time.time() >= (last_config_reload + queue_cleanup_timer): # Non blocking 5 minute interval check
                 for link in links_to_remove:
                     for line in fileinput.input(filename, inplace=True):
@@ -201,13 +204,15 @@ def download_from_file(filename):
                     log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
                 last_config_reload = time.time()
 
+            # if, for some reason, we do not have the required amount of threads running, spin up new threads
             while len(processes) != args.parallel_threads:
                 p = Process(target=call_download_thread, args=(tasks_to_accomplish, links_to_remove))
                 processes.append(p)
                 p.start()
 
-
-            time.sleep(.25)
+            # check for any threads that have completed
+            for process in processes:
+                process.join(download_from_file_while_loop_sleep_time) #this will clean up any processes that exited/crashed somehow, while also blocking for .25 seconds
 
 
     except KeyboardInterrupt:
