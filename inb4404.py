@@ -4,8 +4,8 @@ import os, re, time
 import http.client
 import fileinput
 from multiprocessing import Process
-from multiprocessing import Lock, Queue, current_process, Manager
-import queue
+from multiprocessing import Lock, current_process, Manager
+#import queue
 
 
 log = logging.getLogger('inb4404')
@@ -13,10 +13,10 @@ workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
 call_download_thread_while_loop_sleep_time = .20
 download_from_file_while_loop_sleep_time = .20
-queue_cleanup_timer = 300 #in seconds, how often to check for dead links and mark them dead in the config file
+queue_cleanup_timer = 30 #in seconds, how often to check for dead links and mark them dead in the config file
 thread_check_timer = 20 #in seconds, how often to queue up all threads to check for new content
 manager = Manager()
-tasks_to_accomplish = manager.list()
+tasks_to_accomplish = manager.list() #queue for threads to pull work out of
 links_to_remove = manager.list() #queue used to keep track of threads to remove from config
 
 
@@ -73,28 +73,23 @@ def get_title_list(html_content):
     return ret
 
 
-def call_download_thread(que, links_to_remove, running_tasks):
+def call_download_thread(que, links_to_remove):
     while True:
         try:
-            #time.sleep(call_download_thread_while_loop_sleep_time)
-            #thread_link, args = que.get()
-            if len(que) == 0:
-                time.sleep(call_download_thread_while_loop_sleep_time)
+            if len(que) == 0: #check if there are any jobs waiting
+                time.sleep(call_download_thread_while_loop_sleep_time) #sleep to prevent while loop from dominating CPU
                 continue
             thread_link = que.pop(0)
-            running_tasks.append(thread_link)
             download_thread(thread_link, links_to_remove)
-            running_tasks.remove(thread_link)
         except KeyboardInterrupt:
             break
-        except queue.Empty:
+        except:
             pass
 
     return
 
 
 def download_thread(thread_link, links_to_remove):
-    print("running!")
     board = thread_link.split('/')[3]
     thread = thread_link.split('/')[5].split('#')[0]
     if len(thread_link.split('/')) > 6:
@@ -160,7 +155,7 @@ def download_thread(thread_link, links_to_remove):
             links_to_remove.append(thread_link)
     except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
         log.fatal(thread_link + ' crashed!')
-        raise
+        #raise #commenting this out to test my theory
 
     if not args.less:
         log.info('Checking ' + board + '/' + thread)
@@ -169,15 +164,14 @@ def download_thread(thread_link, links_to_remove):
 
 
 def download_from_file(filename):
-    running_links = []
+    running_links = [] #4chan threads to check periodically
     last_config_reload = time.time()
     last_queue_check = time.time()
-    running_tasks = []
 
     processes = []
 
     for w in range(args.parallel_threads):
-        p = Process(target=call_download_thread, args=(tasks_to_accomplish, links_to_remove, running_tasks))
+        p = Process(target=call_download_thread, args=(tasks_to_accomplish, links_to_remove))
         processes.append(p)
         p.start()
 
@@ -188,7 +182,6 @@ def download_from_file(filename):
                 if link not in running_links:
                     running_links.append(link)
                     log.info('Added ' + link)
-                    #tasks_to_accomplish.put((link,args))
                     tasks_to_accomplish.append(link)
 
             if time.time() >= (last_queue_check + thread_check_timer):
@@ -198,20 +191,25 @@ def download_from_file(filename):
                 last_queue_check = time.time()
 
             if args.reload and time.time() >= (last_config_reload + queue_cleanup_timer): # Non blocking 5 minute interval check
-                #links_to_remove = []
-
-
                 for link in links_to_remove:
                     for line in fileinput.input(filename, inplace=True):
                         print(line.replace(link, '-' + link), end='')
                     running_links.remove(link)
+                    links_to_remove.remove(link)
                     log.info('Removed ' + link)
                 if not args.less:
                     log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
                 last_config_reload = time.time()
 
+            while len(processes) != args.parallel_threads:
+                p = Process(target=call_download_thread, args=(tasks_to_accomplish, links_to_remove))
+                processes.append(p)
+                p.start()
+
+
             time.sleep(.25)
-            print(len(tasks_to_accomplish))
+
+
     except KeyboardInterrupt:
         for p in processes: #close processes
             p.terminate()
