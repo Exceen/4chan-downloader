@@ -26,18 +26,18 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
 
+    if args.title:
+        try:
+            import bs4
+        except ImportError:
+            logging.error('Could not import BeautifulSoup! Disabling --title option...')
+            args.title = False
+
     thread = args.thread[0].strip()
     if thread[:4].lower() == 'http':
         download_thread(thread, args)
     else:
         download_from_file(thread)
-
-    if args.title:
-        try:
-            import bs4
-        except ImportError:
-            logging.error("Could not import BeautifulSoup! Disabling --title option...")
-            args.title = False
 
 def load(url):
     req = urllib.request.Request(url, headers={'User-Agent': '4chan Browser'})
@@ -65,8 +65,6 @@ def call_download_thread(thread_link, args):
     except KeyboardInterrupt:
         pass
 
-    return
-
 def download_thread(thread_link, args):
     board = thread_link.split('/')[3]
     thread = thread_link.split('/')[5].split('#')[0]
@@ -81,14 +79,13 @@ def download_thread(thread_link, args):
             regex = '(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm)))'
             html_result = load(thread_link).decode('utf-8')
             regex_result = list(set(re.findall(regex, html_result)))
+            regex_result = sorted(regex_result, key=lambda tup: tup[1])
+            regex_result_len = len(regex_result)
+            regex_result_cnt = 1
 
             directory = os.path.join(workpath, 'downloads', board, thread)
             if not os.path.exists(directory):
                 os.makedirs(directory)
-
-            regex_result = sorted(regex_result, key=lambda tup: tup[1])
-            regex_result_len = len(regex_result)
-            regex_result_cnt = 1
 
             if args.title:
                 all_titles = get_title_list(html_result)
