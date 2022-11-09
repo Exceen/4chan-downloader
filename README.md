@@ -1,4 +1,4 @@
-![4Chan-downloader](4chanDownloader_Logo_Header.png)
+4chan-downloader
 ================
 
 Python script to download all images/webms of a 4chan thread
