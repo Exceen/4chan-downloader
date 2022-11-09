@@ -29,8 +29,9 @@ def main():
     if args.title:
         try:
             import bs4
+            import django
         except ImportError:
-            logging.error('Could not import BeautifulSoup! Disabling --title option...')
+            logging.error('Could not import the required modules! Disabling --title option...')
             args.title = False
 
     thread = args.thread[0].strip()
@@ -95,8 +96,11 @@ def download_thread(thread_link, args):
 
                 if args.title:
                     img = all_titles[enum_index]
+                    from django.utils.text import get_valid_filename
+                    img_path = os.path.join(directory, get_valid_filename(img))
+                else:
+                    img_path = os.path.join(directory, img)
 
-                img_path = os.path.join(directory, img)
                 if not os.path.exists(img_path):
                     data = load('https:' + link)
 
