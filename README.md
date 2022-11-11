@@ -40,3 +40,7 @@ then it looks for all threads that include `mhg` inside the `vg` board, stores t
 ### Legacy ###
 
 The current scripts are written in python3, in case you still use python2 you can use an old version of the script inside the legacy directory.
+
+### TODO ###
+
+fix duplicated filenames when running with `--title`
