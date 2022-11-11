@@ -8,7 +8,7 @@ Python script to download all images/webms of a 4chan thread
 The main script is called inb4404.py and can be called like this: `python inb4404.py [thread/filename]`
 
 ```
-usage: inb4404.py [-h] [-c] [-d] [-l] [-n] [-r] thread
+usage: inb4404.py [-h] [-c] [-d] [-l] [-n] [-r] [-t] thread
 
 positional arguments:
   thread              url of the thread (or filename; one url per line)
