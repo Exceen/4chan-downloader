@@ -29,6 +29,10 @@ You can parse a file instead of a thread url. In this file you can put as many l
 
 If you use the --use-names argument, the thread name is used to name the respective thread directory instead of the thread id.
 
+### Requirements ###
+
+This script can be called using the default python libraries. Only if you want to use the `--use-names` parameter you have to install the dependencies from the `requirements.txt`-file. This can be done by calling `pip install -r requirements.txt`.
+
 ### Thread Watcher ###
 
 This is a work-in-progress script but basic functionality is already given. If you call the script like
