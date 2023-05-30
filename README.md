@@ -5,10 +5,10 @@ Python script to download all images/webms of a 4chan thread
 
 ### Download Script ###
 
-The main script is called inb4404.py and can be called like this: `python inb4404.py [thread/filename]`
+The main script is called inb4404.py and can be called like this: `python3 inb4404.py [thread/filename]`
 
 ```
-usage: inb4404.py [-h] [-c] [-d] [-l] [-n] [-r] [-t] thread
+usage: inb4404.py [-h] [-c] [-d] [-l] [-n] [-r] [-t] thread/filename
 
 positional arguments:
   thread              url of the thread (or filename; one url per line)
@@ -23,15 +23,16 @@ optional arguments:
                       (...4chan.org/board/thread/thread-id/thread-name)
   -r, --reload        reload the queue file every 5 minutes
   -t, --title         save original filenames
+      --no-new-dir    don't create the `new` directory
 ```
 
 You can parse a file instead of a thread url. In this file you can put as many links as you want, you just have to make sure that there's one url per line. A line is considered to be a url if the first 4 letters of the line start with 'http'.
 
-If you use the --use-names argument, the thread name is used to name the respective thread directory instead of the thread id.
+If you use the --use-names argument, the thread name is used to name the respective thread-directory instead of the thread id. You can specify this name yourself, e.g.: `https://boards.4chan.org/a/thread/12345678/this-is-my-thread-name`
 
 ### Requirements ###
 
-This script can be called using the default python libraries. Only if you want to use the `--use-names` parameter you have to install the dependencies from the `requirements.txt`-file. This can be done by calling `pip install -r requirements.txt`.
+This script can be called using the default python3 libraries. Only if you want to use the `--use-names` parameter you have to install the dependencies from the `requirements.txt`-file. This can be done by calling `pip install -r requirements.txt`.
 
 ### Thread Watcher ###
 

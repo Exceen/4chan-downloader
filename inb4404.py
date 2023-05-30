@@ -19,6 +19,7 @@ def main():
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
+    parser.add_argument(      '--no-new-dir', action='store_true', help='don\'t create the `new` directory')
     args = parser.parse_args()
 
     if args.date:
@@ -117,12 +118,13 @@ def download_thread(thread_link, args):
                     # saves new images to a seperate directory
                     # if you delete them there, they are not downloaded again
                     # if you delete an image in the 'downloads' directory, it will be downloaded again
-                    copy_directory = os.path.join(workpath, 'new', board, thread)
-                    if not os.path.exists(copy_directory):
-                        os.makedirs(copy_directory)
-                    copy_path = os.path.join(copy_directory, img)
-                    with open(copy_path, 'wb') as f:
-                        f.write(data)
+                    if not args.no_new_dir:
+                        copy_directory = os.path.join(workpath, 'new', board, thread)
+                        if not os.path.exists(copy_directory):
+                            os.makedirs(copy_directory)
+                        copy_path = os.path.join(copy_directory, img)
+                        with open(copy_path, 'wb') as f:
+                            f.write(data)
                     ##################################################################################
                 regex_result_cnt += 1
 
