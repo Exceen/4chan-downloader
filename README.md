@@ -3,6 +3,8 @@
 
 Python script to download all images/webms of a 4chan thread
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/exceen)
+
 ### Download Script ###
 
 The main script is called inb4404.py and can be called like this: `python3 inb4404.py [thread/filename]`
