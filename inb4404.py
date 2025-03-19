@@ -136,12 +136,17 @@ def download_thread(thread_link, args):
                     ##################################################################################
                 regex_result_cnt += 1
 
-        except urllib.error.HTTPError:
+        except urllib.error.HTTPError as ex1:
             time.sleep(10)
+
+            if ex1.code == 429:
+                log.info('%s 429\'d', thread_link)
+                continue
+
             try:
                 load(thread_link)    
-            except urllib.error.HTTPError:
-                log.info('%s 404\'d', thread_link)
+            except urllib.error.HTTPError as ex2:
+                log.info('%s %s\'d', thread_link, str(ex2.code))
                 break
             continue
         except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
