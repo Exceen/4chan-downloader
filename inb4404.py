@@ -48,8 +48,14 @@ def load(url):
         'Sec-Fetch-Site': 'same-origin',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-User': '?1',
         'Accept-Language': 'en-US,en;q=0.5',
         'Referer': 'https://boards.4chan.org',
+        'Connection': 'keep-alive',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Priority': 'u=0, i',
+        'TE': 'trailers',
     })
     return urllib.request.urlopen(req).read()
 
