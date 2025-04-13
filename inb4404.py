@@ -42,6 +42,9 @@ def main():
         download_from_file(thread)
 
 def load(url):
+    parsed = urllib.parse.urlparse(url)
+    path_parts = parsed.path.strip('/').split('/')
+    referer = f'{parsed.scheme}://{parsed.netloc}/{path_parts[0]}'
     req = urllib.request.Request(url, headers={
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
         'Upgrade-Insecure-Requests': '1',
@@ -50,7 +53,7 @@ def load(url):
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-User': '?1',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': 'https://boards.4chan.org',
+        'Referer': referer,
         'Connection': 'keep-alive',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
