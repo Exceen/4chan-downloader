@@ -92,7 +92,7 @@ def download_thread(thread_link, args):
 
     while True:
         try:
-            regex = r'(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm|pdf)))'
+            regex = r'(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm|pdf|mp4)))'
             html_result = load(thread_link).decode('utf-8')
             regex_result = list(set(re.findall(regex, html_result)))
             regex_result = sorted(regex_result, key=lambda tup: tup[1])
