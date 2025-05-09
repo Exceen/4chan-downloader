@@ -165,9 +165,10 @@ def download_thread(thread_link, args):
             log.fatal(thread_link + ' crashed!')
             raise
 
+        time.sleep(args.refresh_time)
+
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
-        time.sleep(args.refresh_time)
 
 def download_from_file(filename):
     running_links = []
