@@ -21,6 +21,8 @@ def main():
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
     parser.add_argument(      '--no-new-dir', action='store_true', help='don\'t create the `new` directory')
     parser.add_argument(      '--refresh-time', type=float, default=20, help='Delay in seconds before refreshing the thread')
+    parser.add_argument(      '--throttle', type=float, default=0.5, help='Delay in seconds between downloads in the same thread')
+    parser.add_argument(      '--backoff', type=float, default=0.5, help='Delay in seconds by which throttle should increase on 429')
     args = parser.parse_args()
 
     if args.date:
@@ -95,6 +97,7 @@ def download_thread(thread_link, args):
             thread = thread_tmp
 
     log.info('Watching ' + board + '/' + thread)
+    throttle = args.throttle
 
     while True:
         try:
@@ -112,6 +115,7 @@ def download_thread(thread_link, args):
             if args.title:
                 all_titles = get_title_list(html_result)
 
+            # download all images on the page
             for enum_index, enum_tuple in enumerate(regex_result):
                 link, img = enum_tuple
 
@@ -122,6 +126,7 @@ def download_thread(thread_link, args):
                 else:
                     img_path = os.path.join(directory, img)
 
+                # download image if we don't already have it
                 if not os.path.exists(img_path):
                     data = load('https:' + link)
 
@@ -146,17 +151,23 @@ def download_thread(thread_link, args):
                         with open(copy_path, 'wb') as f:
                             f.write(data)
                     ##################################################################################
+
+                    # Delay in between image downloads
+                    time.sleep(throttle)
                 regex_result_cnt += 1
 
         except urllib.error.HTTPError as ex1:
-            time.sleep(10)
-
+            # 429 Too Many Requests
             if ex1.code == 429:
                 log.info('%s 429\'d', thread_link)
+                throttle += args.backoff
+                sleep_time = 10 + throttle
+                time.sleep(sleep_time)
                 continue
 
             try:
-                load(thread_link)    
+                time.sleep(10) # wait before trying again
+                load(thread_link)
             except urllib.error.HTTPError as ex2:
                 log.info('%s %s\'d', thread_link, str(ex2.code))
                 break
