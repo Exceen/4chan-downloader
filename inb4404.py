@@ -20,6 +20,7 @@ def main():
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
     parser.add_argument(      '--no-new-dir', action='store_true', help='don\'t create the `new` directory')
+    parser.add_argument(      '--refresh-time', type=float, default=20, help='Delay in seconds before refreshing the thread')
     args = parser.parse_args()
 
     if args.date:
@@ -164,7 +165,7 @@ def download_thread(thread_link, args):
 
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
-        time.sleep(20)
+        time.sleep(args.refresh_time)
 
 def download_from_file(filename):
     running_links = []
