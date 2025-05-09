@@ -15,7 +15,8 @@ def main():
     parser.add_argument('thread', nargs=1, help='url of the thread (or filename; one url per line)')
     parser.add_argument('-c', '--with-counter', action='store_true', help='show a counter next the the image that has been downloaded')
     parser.add_argument('-d', '--date', action='store_true', help='show date as well')
-    parser.add_argument('-l', '--less', action='store_true', help='show less information (surpresses checking messages)')
+    parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
+    parser.add_argument('-l', '--less', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
@@ -27,6 +28,9 @@ def main():
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     else:
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+
+    if args.less:
+        logging.info("'--less' is now the default behavior. Use '--verbose' to increase output detail.")
 
     if args.title:
         try:
@@ -167,7 +171,7 @@ def download_thread(thread_link, args):
 
         time.sleep(args.refresh_time)
 
-        if not args.less:
+        if args.verbose:
             log.info('Checking ' + board + '/' + thread)
 
 def download_from_file(filename):
@@ -199,7 +203,7 @@ def download_from_file(filename):
                     print(line.replace(link, '-' + link), end='')
                 running_links.remove(link)
                 log.info('Removed ' + link)
-            if not args.less:
+            if args.verbose:
                 log.info('Reloading ' + args.thread[0]) # thread = filename here; reloading on next loop
         else:
             break
