@@ -71,11 +71,11 @@ def get_title_list(html_content):
     divs = parsed.find_all("div", {"class": "fileText"})
 
     for i in divs:
-        current_child = i.findChildren("a", recursive = False)[0]
+        first_child = i.find_all("a", recursive = False)[0]
         try:
-            ret.append(current_child["title"])
+            ret.append(first_child["title"])
         except KeyError:
-            ret.append(current_child.text)
+            ret.append(first_child.text)
 
     return ret
 
