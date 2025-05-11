@@ -94,6 +94,8 @@ def download_thread(thread_link, args):
         if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
             thread = thread_tmp
 
+    log.info('Watching ' + board + '/' + thread)
+
     while True:
         try:
             regex = r'(\/\/i(?:s|)\d*\.(?:4cdn|4chan)\.org\/\w+\/(\d+\.(?:jpg|png|gif|webm|pdf|mp4)))'
@@ -163,9 +165,10 @@ def download_thread(thread_link, args):
             log.fatal(thread_link + ' crashed!')
             raise
 
+        time.sleep(args.refresh_time)
+
         if not args.less:
             log.info('Checking ' + board + '/' + thread)
-        time.sleep(args.refresh_time)
 
 def download_from_file(filename):
     running_links = []
@@ -174,7 +177,6 @@ def download_from_file(filename):
         for link in [_f for _f in [line.strip() for line in open(filename) if line[:4] == 'http'] if _f]:
             if link not in running_links:
                 running_links.append(link)
-                log.info('Added ' + link)
 
             process = Process(target=call_download_thread, args=(link, args, ))
             process.start()
