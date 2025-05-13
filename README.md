@@ -10,22 +10,24 @@ Python script to download all images/webms of a 4chan thread
 The main script is called inb4404.py and can be called like this: `python3 inb4404.py [thread/filename]`
 
 ```
-usage: inb4404.py [-h] [-c] [-d] [-l] [-n] [-r] [-t] thread/filename
+usage: inb4404.py [-h] [-c] [-d] [-l] [-n] [-r] [-t] [--no-new-dir] [--refresh-time REFRESH_TIME] [--throttle THROTTLE] [--backoff BACKOFF] thread/filename
 
 positional arguments:
-  thread              url of the thread (or filename; one url per line)
+  thread                url of the thread (or filename; one url per line)
 
-optional arguments:
-  -h, --help          show this help message and exit
-  -c, --with-counter  show a counter next the the image that has been
-                      downloaded
-  -d, --date          show date as well
-  -l, --less          show less information (surpresses checking messages)
-  -n, --use-names     use thread names instead of the thread ids
-                      (...4chan.org/board/thread/thread-id/thread-name)
-  -r, --reload        reload the queue file every 5 minutes
-  -t, --title         save original filenames
-      --no-new-dir    don't create the `new` directory
+options:
+  -h, --help            show this help message and exit
+  -c, --with-counter    show a counter next the the image that has been downloaded
+  -d, --date            show date as well
+  -l, --less            show less information (surpresses checking messages)
+  -n, --use-names       use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)
+  -r, --reload          reload the queue file every 5 minutes
+  -t, --title           save original filenames
+  --no-new-dir          don't create the `new` directory
+  --refresh-time REFRESH_TIME
+                        Delay in seconds before refreshing the thread
+  --throttle THROTTLE   Delay in seconds between downloads in the same thread
+  --backoff BACKOFF     Delay in seconds by which throttle should increase on 429
 ```
 
 You can parse a file instead of a thread url. In this file you can put as many links as you want, you just have to make sure that there's one url per line. A line is considered to be a url if the first 4 letters of the line start with 'http'.
