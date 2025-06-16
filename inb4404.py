@@ -54,7 +54,6 @@ def load(url):
     referer = f'{parsed.scheme}://{parsed.netloc}/{path_parts[0]}'
     req = urllib.request.Request(url, headers={
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
-        'Upgrade-Insecure-Requests': '1',
         'Sec-Fetch-Site': 'same-origin',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Dest': 'document',
