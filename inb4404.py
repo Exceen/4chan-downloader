@@ -1,13 +1,19 @@
 #!/usr/bin/python3
 import urllib.request, urllib.error, urllib.parse, argparse, logging
 import os, re, time
-import http.client 
+import http.client
 import fileinput
 from multiprocessing import Process
 
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
+
+def configure_logging(args):
+    if args.date:
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
+    else:
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')
 
 def main():
     global args
@@ -25,11 +31,7 @@ def main():
     parser.add_argument(      '--throttle', type=float, default=0.5, help='Delay in seconds between downloads in the same thread')
     parser.add_argument(      '--backoff', type=float, default=0.5, help='Delay in seconds by which throttle should increase on 429')
     args = parser.parse_args()
-
-    if args.date:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
-    else:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%I:%M:%S %p')    
+    configure_logging(args)
 
     if args.less:
         logging.info("'--less' is now the default behavior. Use '--verbose' to increase output detail.")
@@ -85,6 +87,7 @@ def get_title_list(html_content):
     return ret
 
 def call_download_thread(thread_link, args):
+    configure_logging(args) # Configure logging in worker process (multiprocessing doesn't inherit logging config)
     try:
         download_thread(thread_link, args)
     except KeyboardInterrupt:
@@ -96,7 +99,7 @@ def download_thread(thread_link, args):
     if len(thread_link.split('/')) > 6:
         thread_tmp = thread_link.split('/')[6].split('#')[0]
 
-        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):                
+        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
             thread = thread_tmp
 
     log.info('Watching ' + board + '/' + thread)
@@ -198,7 +201,7 @@ def download_from_file(filename):
 
         if len(processes) == 0:
             log.warning(filename + ' empty')
-        
+
         if args.reload:
             time.sleep(60 * 5) # 5 minutes
             links_to_remove = []
@@ -218,10 +221,8 @@ def download_from_file(filename):
         else:
             break
 
-
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         pass
-
