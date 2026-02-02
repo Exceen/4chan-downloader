@@ -23,7 +23,7 @@ def main():
     parser.add_argument('-d', '--date', action='store_true', help='show date as well')
     parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
     parser.add_argument('-l', '--less', action='store_true', help=argparse.SUPPRESS)
-    parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
+    parser.add_argument('-n', '--append-names', action='store_true', help='append thread names to the thread ids (...4chan.org/board/thread/thread-id/thread-name)')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
     parser.add_argument(      '--no-new-dir', action='store_true', help='don\'t create the `new` directory')
@@ -95,12 +95,15 @@ def call_download_thread(thread_link, args):
 
 def download_thread(thread_link, args):
     board = thread_link.split('/')[3]
-    thread = thread_link.split('/')[5].split('#')[0]
+    thread_id = thread_link.split('/')[5].split('#')[0]
+    thread = thread_id
     if len(thread_link.split('/')) > 6:
-        thread_tmp = thread_link.split('/')[6].split('#')[0]
+        thread_name = thread_link.split('/')[6].split('#')[0]
 
-        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_tmp)):
-            thread = thread_tmp
+        if args.append_names:
+            thread = f'{thread_id}-{thread_name}'
+        elif os.path.exists(os.path.join(workpath, 'downloads', board, thread_name)):
+            thread = thread_name
 
     log.info('Watching ' + board + '/' + thread)
     throttle = args.throttle
