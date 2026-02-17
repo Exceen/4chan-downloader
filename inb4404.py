@@ -30,6 +30,7 @@ def main():
     parser.add_argument(      '--refresh-time', type=float, default=20, help='Delay in seconds before refreshing the thread')
     parser.add_argument(      '--throttle', type=float, default=0.5, help='Delay in seconds between downloads in the same thread')
     parser.add_argument(      '--backoff', type=float, default=0.5, help='Delay in seconds by which throttle should increase on 429')
+    parser.add_argument(      '--run-once', action='store_true', help='download images once and exit (do not loop)')
     args = parser.parse_args()
     configure_logging(args)
 
@@ -181,6 +182,9 @@ def download_thread(thread_link, args):
         except (urllib.error.URLError, http.client.BadStatusLine, http.client.IncompleteRead):
             log.fatal(thread_link + ' crashed!')
             raise
+
+        if args.run_once:
+            break
 
         time.sleep(args.refresh_time)
 
