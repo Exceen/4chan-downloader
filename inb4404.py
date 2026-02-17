@@ -3,11 +3,32 @@ import urllib.request, urllib.error, urllib.parse, argparse, logging
 import os, re, time
 import http.client
 import fileinput
+import json
 from multiprocessing import Process
 
 log = logging.getLogger('inb4404')
 workpath = os.path.dirname(os.path.realpath(__file__))
 args = None
+
+def load_downloaded_list(directory):
+    """Load the set of downloaded filenames from .downloaded.json"""
+    json_path = os.path.join(directory, '.downloaded.json')
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                return set(json.load(f))
+        except (json.JSONDecodeError, IOError):
+            return set()
+    return set()
+
+def save_downloaded_list(directory, downloaded_set):
+    """Save the set of downloaded filenames to .downloaded.json"""
+    json_path = os.path.join(directory, '.downloaded.json')
+    try:
+        with open(json_path, 'w') as f:
+            json.dump(sorted(list(downloaded_set)), f, indent=2)
+    except IOError as e:
+        log.warning(f'Could not save download tracking file: {e}')
 
 def configure_logging(args):
     if args.date:
@@ -27,6 +48,7 @@ def main():
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
     parser.add_argument(      '--no-new-dir', action='store_true', help='don\'t create the `new` directory')
+    parser.add_argument(      '--track-downloaded', action='store_true', help='track downloaded files in .downloaded.json to prevent re-downloading deleted files')
     parser.add_argument(      '--refresh-time', type=float, default=20, help='Delay in seconds before refreshing the thread')
     parser.add_argument(      '--throttle', type=float, default=0.5, help='Delay in seconds between downloads in the same thread')
     parser.add_argument(      '--backoff', type=float, default=0.5, help='Delay in seconds by which throttle should increase on 429')
@@ -118,6 +140,9 @@ def download_thread(thread_link, args):
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
+            # Load downloaded tracking if enabled
+            downloaded_set = load_downloaded_list(directory) if args.track_downloaded else None
+
             if args.title:
                 all_titles = get_title_list(html_result)
 
@@ -133,7 +158,8 @@ def download_thread(thread_link, args):
                     img_path = os.path.join(directory, img)
 
                 # download image if we don't already have it
-                if not os.path.exists(img_path):
+                already_downloaded = args.track_downloaded and img in downloaded_set
+                if not os.path.exists(img_path) and not already_downloaded:
                     data = load('https:' + link)
 
                     output_text = board + '/' + thread + '/' + img
@@ -157,6 +183,11 @@ def download_thread(thread_link, args):
                         with open(copy_path, 'wb') as f:
                             f.write(data)
                     ##################################################################################
+
+                    # Track downloaded file if tracking is enabled
+                    if args.track_downloaded and downloaded_set is not None:
+                        downloaded_set.add(img)
+                        save_downloaded_list(directory, downloaded_set)
 
                     # Delay in between image downloads
                     time.sleep(throttle)
