@@ -45,7 +45,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
     parser.add_argument('-l', '--less', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('-n', '--use-names', action='store_true', help='use thread names instead of the thread ids. useful for grouping threads (...4chan.org/board/thread/thread-id/thread-name)')
-    parser.add_argument(    , '--append-names', action='store_true', help='similar to --use-names, it appends the name to the id')
+    parser.add_argument(      '--append-names', action='store_true', help='similar to --use-names, it appends the name to the id')
     parser.add_argument('-r', '--reload', action='store_true', help='reload the queue file every 5 minutes')
     parser.add_argument('-t', '--title', action='store_true', help='save original filenames')
     parser.add_argument(      '--no-new-dir', action='store_true', help='don\'t create the `new` directory')
