@@ -159,7 +159,7 @@ def download_thread(thread_link, args):
 
                 # download image if we don't already have it
                 already_downloaded = args.track_downloaded and img in downloaded_set
-                if not os.path.exists(img_path) and not already_downloaded:
+                if not already_downloaded and not os.path.exists(img_path):
                     data = load('https:' + link)
 
                     output_text = board + '/' + thread + '/' + img
