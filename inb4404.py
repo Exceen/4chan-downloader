@@ -124,10 +124,12 @@ def download_thread(thread_link, args):
     if len(thread_link.split('/')) > 6:
         thread_name = thread_link.split('/')[6].split('#')[0]
 
-        if args.append_names:
-            thread = f'{thread_id}-{thread_name}'
-        elif os.path.exists(os.path.join(workpath, 'downloads', board, thread_name)):
+        if args.use_names or os.path.exists(os.path.join(workpath, 'downloads', board, thread_name)):
             thread = thread_name
+        else:
+            temp = thread_id + '-' + thread_name
+            if args.append_names or os.path.exists(os.path.join(workpath, 'downloads', board, temp)):
+                thread = temp
 
     log.info('Watching ' + board + '/' + thread)
     throttle = args.throttle
